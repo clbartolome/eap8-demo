@@ -1,0 +1,20 @@
+build:
+  uri: https://github.com/clbartolome/eap8-demo
+  ref: main
+  env:
+    - name: POSTGRESQL_DRIVER_VERSION
+      value: '42.5.1'
+deploy:
+  replicas: 1
+  env:
+    # Env vars to connect to PostgreSQL DB
+    - name: POSTGRESQL_DATABASE
+      value: sample-db
+    - name: POSTGRESQL_USER
+      value: develop
+    - name: POSTGRESQL_PASSWORD
+      value: develop
+    - name: POSTGRESQL_DATASOURCE
+      value: Contacts
+    - name: POSTGRESQL_SERVICE_HOST
+      value: eap-sample-db
