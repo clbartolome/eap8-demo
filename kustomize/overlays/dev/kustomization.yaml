@@ -19,5 +19,5 @@ secretGenerator:
 
 images:
 - name: eap-sample
-  newName: quay.io/demo-applications/lol-champions
-  newTag: 1.0.0
+  newName: eap-sample
+  newTag: 6.0.1-SNAPSHOT-1744468396-dev
