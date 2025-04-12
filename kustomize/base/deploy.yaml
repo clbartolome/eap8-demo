@@ -12,7 +12,7 @@ spec:
   template:
     metadata:
       labels:
-        deployment: demo-app
+        deployment: eap-sample
       name: eap-sample
     spec:
       containers:
