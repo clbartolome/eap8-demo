@@ -19,6 +19,6 @@ secretGenerator:
   - secured.env
 
 images:
-- name: eap-sample
+- name: app-image
   newName: image-registry.openshift-image-registry.svc:5000/deleteme/eap-sample
   newTag: 6.0.1-SNAPSHOT-1744468396-dev
