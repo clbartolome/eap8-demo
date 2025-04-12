@@ -1,0 +1,58 @@
+---
+apiVersion: build.openshift.io/v1
+kind: BuildConfig
+metadata:
+  name: eap-sample-build-artifacts
+spec:
+  output:
+    to:
+      kind: ImageStreamTag
+      name: eap-sample-build-artifacts:latest
+  runPolicy: Serial
+  source:
+    git:
+      ref: main
+      uri: https://github.com/clbartolome/eap8-demo
+    type: Git
+  strategy:
+    sourceStrategy:
+      env:
+      - name: CUSTOM_INSTALL_DIRECTORIES
+        value: extensions
+      - name: POSTGRESQL_DRIVER_VERSION
+        value: 42.5.1
+      forcePull: true
+      from:
+        kind: DockerImage
+        name: registry.redhat.io/jboss-eap-8/eap8-openjdk17-builder-openshift-rhel8:latest
+      incremental: true
+    type: Source
+---
+apiVersion: build.openshift.io/v1
+kind: BuildConfig
+metadata:
+  name: eap-sample
+spec:
+  output:
+    to:
+      kind: ImageStreamTag
+      name: eap-sample:latest
+  source:
+    dockerfile: |-
+      FROM registry.redhat.io/jboss-eap-8/eap8-openjdk17-runtime-openshift-rhel8:latest
+      COPY --chown=jboss:root /server $JBOSS_HOME
+      RUN chmod -R ug+rwX $JBOSS_HOME
+    images:
+    - from:
+        kind: ImageStreamTag
+        name: eap-sample-build-artifacts:latest
+      paths:
+      - destinationDir: .
+        sourcePath: /opt/server
+    type: Docker
+  strategy:
+    dockerStrategy:
+      from:
+        kind: DockerImage
+        name: registry.redhat.io/jboss-eap-8/eap8-openjdk17-runtime-openshift-rhel8:latest
+    type: Docker

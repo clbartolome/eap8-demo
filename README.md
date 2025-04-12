@@ -1,4 +1,4 @@
-# EAP8 Demo
+# EAP8 Demo - CICD
 
 Forked from: https://github.com/RedHat-Middleware-Workshops/eap8-rhd-learning-path.git
 

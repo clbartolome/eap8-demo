@@ -1,0 +1,18 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+commonLabels:
+  app.kubernetes.io/instance: eap-sample
+  app.kubernetes.io/name: eap-sample
+  app.openshift.io/runtime: eap
+  com.company: Red_Hat
+  rht.comp: EAP
+  rht.comp_ver: "8.0"
+  rht.prod_name: Red_Hat_Runtimes
+  rht.prod_ver: 2023-Q4
+  rht.subcomp_t: application
+
+resources:
+- deployment.yaml
+- service.yaml
+- route.yaml

@@ -1,0 +1,96 @@
+apiVersion: tekton.dev/v1
+kind: Pipeline
+metadata:
+  name: eap-demo-ci
+spec:
+  tasks:
+    - name: git-clone
+      params:
+        - name: DELETE_EXISTING
+          value: 'true'
+        - name: SSL_VERIFY
+          value: 'false'
+        - name: URL
+          value: 'https://github.com/clbartolome/eap8-demo'
+        - name: REVISION
+          value: main
+        - name: SUBDIRECTORY
+          value: code
+      taskRef:
+        params:
+          - name: kind
+            value: task
+          - name: name
+            value: git-clone
+          - name: namespace
+            value: openshift-pipelines
+        resolver: cluster
+      workspaces:
+        - name: output
+          workspace: source
+    - name: generate-version
+      params:
+        - name: PATH_CONTEXT
+          value: code
+      runAfter:
+        - git-clone
+      taskRef:
+        kind: Task
+        name: generate-version
+      workspaces:
+        - name: source
+          workspace: source
+    - name: build-artifacts
+      params:
+        - name: SCRIPT
+          value: 'oc start-build eap-sample-build-artifacts --wait=true'
+        - name: VERSION
+          value: latest
+      runAfter:
+        - git-clone
+      taskRef:
+        params:
+          - name: kind
+            value: task
+          - name: name
+            value: openshift-client
+          - name: namespace
+            value: openshift-pipelines
+        resolver: cluster
+    - name: build-eap
+      params:
+        - name: SCRIPT
+          value: 'oc start-build eap-sample --wait=true'
+        - name: VERSION
+          value: latest
+      runAfter:
+        - build-artifacts
+      taskRef:
+        params:
+          - name: kind
+            value: task
+          - name: name
+            value: openshift-client
+          - name: namespace
+            value: openshift-pipelines
+        resolver: cluster
+    - name: tag-dev
+      params:
+        - name: SCRIPT
+          value: 'oc tag eap-sample:latest eap-sample:$(tasks.generate-version.results.VERSION)-dev'
+        - name: VERSION
+          value: latest
+      runAfter:
+        - generate-version
+        - build-eap
+      taskRef:
+        params:
+          - name: kind
+            value: task
+          - name: name
+            value: openshift-client
+          - name: namespace
+            value: openshift-pipelines
+        resolver: cluster
+  workspaces:
+    - name: source

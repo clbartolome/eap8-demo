@@ -1,0 +1,11 @@
+
+---
+apiVersion: image.openshift.io/v1
+kind: ImageStream
+metadata:
+  name: eap-sample
+---
+apiVersion: image.openshift.io/v1
+kind: ImageStream
+metadata: 
+  name: eap-sample-build-artifacts

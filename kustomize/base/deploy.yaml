@@ -1,0 +1,49 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: eap-sample
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      name: eap-sample
+    spec:
+      containers:
+      - envFrom: 
+        - configMapRef:
+            name: eap-sample-configuration
+        - secretRef:
+            name: eap-sample-secured-configuration
+        image: eap-sample:version
+        imagePullPolicy: Always
+        livenessProbe:
+          httpGet:
+            path: /health/live
+            port: admin
+          initialDelaySeconds: 60
+        name: eap-sample
+        ports:
+        - containerPort: 8778
+          name: jolokia
+          protocol: TCP
+        - containerPort: 8080
+          name: http
+          protocol: TCP
+        - containerPort: 8888
+          name: ping
+          protocol: TCP
+        - containerPort: 9990
+          name: admin
+          protocol: TCP
+        readinessProbe:
+          httpGet:
+            path: /health/ready
+            port: admin
+          initialDelaySeconds: 10
+        startupProbe:
+          httpGet:
+            path: /health/live
+            port: admin
+          initialDelaySeconds: 60
