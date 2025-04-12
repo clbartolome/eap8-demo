@@ -11,6 +11,8 @@ spec:
     type: Recreate
   template:
     metadata:
+      labels:
+        deployment: demo-app
       name: eap-sample
     spec:
       containers:
