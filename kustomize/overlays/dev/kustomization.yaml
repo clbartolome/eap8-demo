@@ -20,5 +20,5 @@ secretGenerator:
 
 images:
 - name: eap-sample
-  newName: eap-sample
+  newName: image-registry.openshift-image-registry.svc:5000/deleteme/eap-sample
   newTag: 6.0.1-SNAPSHOT-1744468396-dev
