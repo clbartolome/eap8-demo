@@ -12,6 +12,7 @@ labels:
     rht.prod_name: Red_Hat_Runtimes
     rht.prod_ver: 2023-Q4
     rht.subcomp_t: application
+    app: eap-sample
 
 resources:
 - deploy.yaml
