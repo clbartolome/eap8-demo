@@ -183,7 +183,7 @@ spec:
     # ------------ TAG IMAGE ------------ #
     - name: tag-rc
       runAfter:
-        - release-candidate-approval
+        - deploy-dev
       params:
         - name: SCRIPT
           value: 'oc tag $(params.APP_NAME):$(tasks.generate-version.results.VERSION)-dev $(params.APP_NAME):$(tasks.generate-version.results.VERSION)-rc'
@@ -202,6 +202,7 @@ spec:
     - name: deploy-qa
       runAfter:
         - tag-rc
+        - release-candidate-approval
       taskRef:
         name: deploy
       params:
