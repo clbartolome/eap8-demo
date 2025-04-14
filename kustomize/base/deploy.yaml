@@ -21,7 +21,7 @@ spec:
             name: eap-sample-configuration
         - secretRef:
             name: eap-sample-secured-configuration
-        image: eap-sample:version
+        image: app-image:version
         imagePullPolicy: Always
         livenessProbe:
           httpGet:

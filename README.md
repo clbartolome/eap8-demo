@@ -42,6 +42,9 @@ oc new-project eap-sample-dev
 oc new-project eap-sample-qa
 oc new-project eap-sample-prod
 oc new-project eap-sample-cicd
+
+# Puller image permisions
+oc policy add-role-to-user system:image-puller system:serviceaccount:eap-sample-dev:default -n eap-sample-cicd
 ```
 
 - Deploy databases:
