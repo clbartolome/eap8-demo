@@ -1,0 +1,13 @@
+apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  name: mock
+  namespace: eap-sample-cicd
+spec:
+  params:
+    - name: MESSAGE
+  steps:
+    - name: print-message
+      image: registry.access.redhat.com/ubi8/ubi-minimal:8.3
+      script: |
+        echo "$(params.MESSAGE)"

@@ -1,0 +1,295 @@
+apiVersion: tekton.dev/v1
+kind: Pipeline
+metadata:
+  name: eap-demo-cicd
+  namespace: eap-sample-cicd
+spec:
+  params:
+    - name: APP_NAME
+      type: string
+      default: eap-sample
+    - name: REPO
+      type: string
+      default: https://github.com/clbartolome/eap8-demo
+    - name: CODE_BRANCH
+      type: string
+      default: main
+    - name: CICD_BRANCH
+      type: string
+      default: cicd
+    - name: IMAGE_REGISTRY
+      type: string
+      default: image-registry.openshift-image-registry.svc:5000/eap-sample-cicd
+  tasks:
+    # ------------ CLONE CODE ------------ #
+    - name: clone-app-code
+      params:
+        - name: DELETE_EXISTING
+          value: 'true'
+        - name: SSL_VERIFY
+          value: 'false'
+        - name: URL
+          value: $(params.REPO)
+        - name: REVISION
+          value: $(params.CODE_BRANCH)
+        - name: SUBDIRECTORY
+          value: code
+      taskRef:
+        params:
+          - name: kind
+            value: task
+          - name: name
+            value: git-clone
+          - name: namespace
+            value: openshift-pipelines
+        resolver: cluster
+      workspaces:
+        - name: output
+          workspace: source
+    - name: clone-app-deploy
+      params:
+        - name: DELETE_EXISTING
+          value: 'true'
+        - name: SSL_VERIFY
+          value: 'false'
+        - name: URL
+          value: $(params.REPO)
+        - name: REVISION
+          value: $(params.CICD_BRANCH)
+        - name: SUBDIRECTORY
+          value: deploy
+      taskRef:
+        params:
+          - name: kind
+            value: task
+          - name: name
+            value: git-clone
+          - name: namespace
+            value: openshift-pipelines
+        resolver: cluster
+      workspaces:
+        - name: output
+          workspace: source
+    # ------------ GENERATE VERSION ------------ #
+    - name: generate-version
+      params:
+        - name: PATH_CONTEXT
+          value: code
+      runAfter:
+        - clone-app-deploy
+        - clone-app-code
+      taskRef:
+        kind: Task
+        name: generate-version
+      workspaces:
+        - name: source
+          workspace: source
+    # ------------ BUILD IMAGE ------------ #
+    - name: build-artifacts
+      params:
+        - name: SCRIPT
+          value: oc start-build $(params.APP_NAME)-build-artifacts --wait=true
+        - name: VERSION
+          value: latest
+      runAfter:
+        - clone-app-deploy
+        - clone-app-code
+      taskRef:
+        params:
+          - name: kind
+            value: task
+          - name: name
+            value: openshift-client
+          - name: namespace
+            value: openshift-pipelines
+        resolver: cluster
+    - name: build-eap
+      params:
+        - name: SCRIPT
+          value: oc start-build $(params.APP_NAME) --wait=true
+        - name: VERSION
+          value: latest
+      runAfter:
+        - build-artifacts
+      taskRef:
+        params:
+          - name: kind
+            value: task
+          - name: name
+            value: openshift-client
+          - name: namespace
+            value: openshift-pipelines
+        resolver: cluster
+    # ------------ TAG IMAGE ------------ #
+    - name: tag-dev
+      params:
+        - name: SCRIPT
+          value: 'oc tag $(params.APP_NAME):latest $(params.APP_NAME):$(tasks.generate-version.results.VERSION)-dev'
+        - name: VERSION
+          value: latest
+      runAfter:
+        - generate-version
+        - build-eap
+      taskRef:
+        params:
+          - name: kind
+            value: task
+          - name: name
+            value: openshift-client
+          - name: namespace
+            value: openshift-pipelines
+        resolver: cluster
+    # ------------ DEPLOY DEV------------ #
+    - name: deploy-dev
+      runAfter:
+        - tag-dev
+      taskRef:
+        name: deploy
+      params:
+        - name: APP_NAME
+          value: $(params.APP_NAME)
+        - name: PATH_CONTEXT
+          value: deploy
+        - name: ENV
+          value: dev
+        - name: IMAGE_REGISTRY
+          value: "$(params.IMAGE_REGISTRY)"
+        - name: IMAGE_VERSION
+          value: "$(tasks.generate-version.results.VERSION)-dev"
+        - name: BRANCH
+          value: "$(params.CICD_BRANCH)"
+        - name: REPO
+          value: "$(params.REPO)"
+      workspaces:
+        - name: source
+          workspace: source
+    # ------------ RC APPROVAL ------------ #
+    - name: release-candidate-approval
+      taskRef:
+        apiVersion: openshift-pipelines.org/v1alpha1
+        kind: ApprovalTask
+      runAfter:
+        - deploy-dev
+      params:
+      - name: approvers
+        value:
+        - calopezb
+      - name: description
+        value: "Approval needed to create and promote Release Candidate for: $(tasks.generate-version.results.VERSION)-dev"
+      - name: numberOfApprovalsRequired
+        value: '1'
+      - name: timeout
+        value: '60m'
+    # ------------ TAG IMAGE ------------ #
+    - name: tag-rc
+      runAfter:
+        - release-candidate-approval
+      params:
+        - name: SCRIPT
+          value: 'oc tag $(params.APP_NAME):$(tasks.generate-version.results.VERSION)-dev $(params.APP_NAME):$(tasks.generate-version.results.VERSION)-rc'
+        - name: VERSION
+          value: latest
+      taskRef:
+        params:
+          - name: kind
+            value: task
+          - name: name
+            value: openshift-client
+          - name: namespace
+            value: openshift-pipelines
+        resolver: cluster
+    # ------------ DEPLOY QA------------ #
+    - name: deploy-qa
+      runAfter:
+        - tag-rc
+      taskRef:
+        name: deploy
+      params:
+        - name: APP_NAME
+          value: $(params.APP_NAME)
+        - name: PATH_CONTEXT
+          value: deploy
+        - name: ENV
+          value: qa
+        - name: IMAGE_REGISTRY
+          value: "$(params.IMAGE_REGISTRY)"
+        - name: IMAGE_VERSION
+          value: "$(tasks.generate-version.results.VERSION)-dev"
+        - name: BRANCH
+          value: "$(params.CICD_BRANCH)"
+        - name: REPO
+          value: "$(params.REPO)"
+      workspaces:
+        - name: source
+          workspace: source
+    # ------------ VALIDATE QA ------------ #
+    - name: qa-validation
+      runAfter:
+        - deploy-qa
+      taskRef:
+        name: mock
+      params:
+        - name: MESSAGE
+          value: "Fake QA validation"
+    # ------------ PROD APPROVAL ------------ #
+    - name: production-approval
+      taskRef:
+        apiVersion: openshift-pipelines.org/v1alpha1
+        kind: ApprovalTask
+      runAfter:
+        - qa-validation
+      params:
+      - name: approvers
+        value:
+        - calopezb
+      - name: description
+        value: "Approval needed to deploy $(tasks.generate-version.results.VERSION) into PRODUCTION"
+      - name: numberOfApprovalsRequired
+        value: '1'
+      - name: timeout
+        value: '60m'
+    # ------------ TAG IMAGE ------------ #
+    - name: tag-release
+      runAfter:
+        - qa-validation
+      params:
+        - name: SCRIPT
+          value: 'oc tag $(params.APP_NAME):$(tasks.generate-version.results.VERSION)-rc $(params.APP_NAME):$(tasks.generate-version.results.VERSION)'
+        - name: VERSION
+          value: latest
+      taskRef:
+        params:
+          - name: kind
+            value: task
+          - name: name
+            value: openshift-client
+          - name: namespace
+            value: openshift-pipelines
+        resolver: cluster
+    # ------------ DEPLOY PROD ------------ #
+    - name: deploy-production
+      runAfter:
+        - production-approval
+        - tag-release
+      taskRef:
+        name: deploy
+      params:
+        - name: APP_NAME
+          value: $(params.APP_NAME)
+        - name: PATH_CONTEXT
+          value: deploy
+        - name: ENV
+          value: prod
+        - name: IMAGE_REGISTRY
+          value: "$(params.IMAGE_REGISTRY)"
+        - name: IMAGE_VERSION
+          value: "$(tasks.generate-version.results.VERSION)"
+        - name: BRANCH
+          value: "$(params.CICD_BRANCH)"
+        - name: REPO
+          value: "$(params.REPO)"
+      workspaces:
+        - name: source
+          workspace: source
+  workspaces:
+    - name: source

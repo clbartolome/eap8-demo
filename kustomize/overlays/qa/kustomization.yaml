@@ -1,0 +1,19 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - ../../base
+labels:
+  - pairs:
+      env: qa
+configMapGenerator:
+  - name: eap-sample-configuration
+    envs:
+      - properties.env
+secretGenerator:
+  - name: eap-sample-secured-configuration
+    envs:
+      - secured.env
+images:
+  - name: app-image
+    newName: image-registry.openshift-image-registry.svc:5000/eap-sample
+    newTag: 6.0.1-1744622200-dev
