@@ -24,9 +24,6 @@ spec:
         repoURL: https://github.com/clbartolome/eap8-demo
         targetRevision: '{{ branch }}'
         path: 'kustomize/overlays/{{ environment }}'
-        helm:
-          valueFiles:
-            - values.yaml
       destination:
         server: 'https://kubernetes.default.svc'
         namespace: 'eap-sample-{{ environment }}'
