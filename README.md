@@ -72,7 +72,7 @@ oc new-app postgresql-ephemeral \
 
 - Create secret for cicd (update git and argo credentials):
 ```sh
-oc create secret generic hello-secret \
+oc create secret generic eap-cicd-config \
   --from-literal GIT_USER="clbartolome" \
   --from-literal GIT_TOKEN="<update>" \
   --from-literal ARGOCD_SERVER="openshift-gitops-server.openshift-gitops.svc.cluster.local" \

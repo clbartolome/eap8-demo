@@ -22,14 +22,14 @@ spec:
     - name: IMAGE_REGISTRY
       description: Image registry
       type: string
-    - name: IMAGE
-      description: Image org/name
-      type: string
     - name: IMAGE_VERSION
       description: Image new version
       type: string
     - name: REPO
       description: Deploy resources repository
+      type: string
+    - name: BRANCH
+      description: Deploy resources repository branch
       type: string
   stepTemplate:
     envFrom:
@@ -43,7 +43,7 @@ spec:
 
         cd kustomize/overlays/$(params.ENV)
 
-        yq -i '.images[] |= select(.name == "app-image") .newName = "$(params.IMAGE_REGISTRY)/$(params.IMAGE)"' kustomization.yaml
+        yq -i '.images[] |= select(.name == "app-image") .newName = "$(params.IMAGE_REGISTRY)/$(params.APP_NAME)"' kustomization.yaml
         yq -i '.images[] |= select(.name == "app-image") .newTag = "$(params.IMAGE_VERSION)"' kustomization.yaml
 
         cat kustomization.yaml
@@ -56,11 +56,11 @@ spec:
         git config --global user.email "tekton@redhat.com"
         git config --global user.name "tekton"
         git add .
-        git commit -m "Updated $(params.ENV) environment image to: $(params.IMAGE_REGISTRY)/$(params.IMAGE):$(params.IMAGE_VERSION)."  
+        git commit -m "Updated $(params.ENV) environment image to: $(params.IMAGE_REGISTRY)/$(params.APP_NAME):$(params.IMAGE_VERSION)."  
         
         AUTH_REPO=$(echo $(params.REPO) | sed -E "s#https://(.*)#https://$GIT_USER:$GIT_TOKEN@\1#g")
         
-        git push $AUTH_REPO
+        git push $AUTH_REPO HEAD:$(params.BRANCH)
 
     - name: sync-argo
       image: quay.io/argoproj/argocd:latest

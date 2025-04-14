@@ -17,7 +17,7 @@ spec:
         #   branch: cicd
   template:
     metadata:
-      name: 'lol-champions-{{ environment }}'
+      name: 'eap-sample-{{ environment }}'
     spec:
       project: default
       source:
