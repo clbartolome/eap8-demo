@@ -1,0 +1,36 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: eap-sample
+  namespace: openshift-gitops
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  generators:
+    - list:
+        elements:
+        - environment: "dev"
+          branch: cicd
+        # - environment: "stage"
+        #   branch: cicd
+        # - environment: "prod"
+        #   branch: cicd
+  template:
+    metadata:
+      name: 'lol-champions-{{ environment }}'
+    spec:
+      project: default
+      source:
+        repoURL: https://github.com/clbartolome/eap8-demo
+        targetRevision: '{{ branch }}'
+        path: 'kustomize/overlays/{{ environment }}'
+        helm:
+          valueFiles:
+            - values.yaml
+      destination:
+        server: 'https://kubernetes.default.svc'
+        namespace: 'eap-sample-{{ environment }}'
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true

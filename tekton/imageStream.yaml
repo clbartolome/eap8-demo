@@ -4,8 +4,10 @@ apiVersion: image.openshift.io/v1
 kind: ImageStream
 metadata:
   name: eap-sample
+  namespace: eap-sample-cicd
 ---
 apiVersion: image.openshift.io/v1
 kind: ImageStream
 metadata: 
   name: eap-sample-build-artifacts
+  namespace: eap-sample-cicd

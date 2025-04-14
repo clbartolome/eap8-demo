@@ -1,10 +1,11 @@
 apiVersion: tekton.dev/v1
 kind: Pipeline
 metadata:
-  name: eap-demo-ci
+  name: eap-demo-cicd
+  namespace: eap-sample-cicd
 spec:
   tasks:
-    - name: git-clone
+    - name: clone-app-code
       params:
         - name: DELETE_EXISTING
           value: 'true'
@@ -28,12 +29,37 @@ spec:
       workspaces:
         - name: output
           workspace: source
+    - name: clone-app-deploy
+      params:
+        - name: DELETE_EXISTING
+          value: 'true'
+        - name: SSL_VERIFY
+          value: 'false'
+        - name: URL
+          value: 'https://github.com/clbartolome/eap8-demo'
+        - name: REVISION
+          value: cicd
+        - name: SUBDIRECTORY
+          value: deploy
+      taskRef:
+        params:
+          - name: kind
+            value: task
+          - name: name
+            value: git-clone
+          - name: namespace
+            value: openshift-pipelines
+        resolver: cluster
+      workspaces:
+        - name: output
+          workspace: source
     - name: generate-version
       params:
         - name: PATH_CONTEXT
           value: code
       runAfter:
-        - git-clone
+        - clone-app-deploy
+        - clone-app-code
       taskRef:
         kind: Task
         name: generate-version
@@ -43,11 +69,12 @@ spec:
     - name: build-artifacts
       params:
         - name: SCRIPT
-          value: 'oc start-build eap-sample-build-artifacts --wait=true'
+          value: oc start-build eap-sample-build-artifacts --wait=true
         - name: VERSION
           value: latest
       runAfter:
-        - git-clone
+        - clone-app-deploy
+        - clone-app-code
       taskRef:
         params:
           - name: kind
@@ -60,7 +87,7 @@ spec:
     - name: build-eap
       params:
         - name: SCRIPT
-          value: 'oc start-build eap-sample --wait=true'
+          value: oc start-build eap-sample --wait=true
         - name: VERSION
           value: latest
       runAfter:

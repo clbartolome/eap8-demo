@@ -2,6 +2,7 @@ apiVersion: tekton.dev/v1beta1
 kind: Task
 metadata:
   name: generate-version
+  namespace: eap-sample-cicd
 spec:
   description: >-
     This Task is used to generate application version based on timestamp and pom version.

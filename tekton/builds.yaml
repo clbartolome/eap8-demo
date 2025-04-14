@@ -3,6 +3,7 @@ apiVersion: build.openshift.io/v1
 kind: BuildConfig
 metadata:
   name: eap-sample-build-artifacts
+  namespace: eap-sample-cicd
 spec:
   output:
     to:

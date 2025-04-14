@@ -34,6 +34,61 @@ helm install eap-sample -f .s2i.yaml jboss-eap/eap8 --dry-run
 # Review builds and application
 ```
 
+## OpenShift CICD
+
+- Create namespaces:
+```sh
+oc new-project eap-sample-dev
+oc new-project eap-sample-qa
+oc new-project eap-sample-prod
+oc new-project eap-sample-cicd
+```
+
+- Deploy databases:
+```sh
+# DEV
+oc new-app postgresql-ephemeral \
+  -p DATABASE_SERVICE_NAME=eap-sample-db \
+  -p POSTGRESQL_USER=develop \
+  -p POSTGRESQL_PASSWORD=develop \
+  -p POSTGRESQL_DATABASE=sample-db -n eap-sample-dev
+
+# QA
+oc new-app postgresql-ephemeral \
+  -p DATABASE_SERVICE_NAME=eap-sample-db \
+  -p POSTGRESQL_USER=qa \
+  -p POSTGRESQL_PASSWORD=qa \
+  -p POSTGRESQL_DATABASE=sample-db -n eap-sample-qa
+# PROD
+oc new-app postgresql-ephemeral \
+  -p DATABASE_SERVICE_NAME=eap-sample-db \
+  -p POSTGRESQL_USER=production \
+  -p POSTGRESQL_PASSWORD=production \
+  -p POSTGRESQL_DATABASE=sample-db -n eap-sample-prod
+```
+
+- Create secret for cicd (update git and argo credentials):
+```sh
+oc create secret generic hello-secret \
+  --from-literal GIT_USER="clbartolome" \
+  --from-literal GIT_TOKEN="<update>" \
+  --from-literal ARGOCD_SERVER="openshift-gitops-server.openshift-gitops.svc.cluster.local" \
+  --from-literal ARGOCD_USERNAME="admin" \
+  --from-literal ARGOCD_PASSWORD="<update>" \
+  -n eap-sample-cicd
+```
+
+- Apply Tekton resources:
+```sh
+oc apply -f tekton
+```
+
+- Create ArgoCD appSet:
+```sh
+oc apply -f argo/eap-sample.yaml
+```
+
+
 
 ## Contacts APP
 
