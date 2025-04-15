@@ -2,6 +2,9 @@
 
 Forked from: https://github.com/RedHat-Middleware-Workshops/eap8-rhd-learning-path.git
 
+> [!NOTE]  
+> Branch **'cicd'** contains instructions to setup a CICD process to build and deploy this application in multiple environments using Tekton and ArgoCD.
+
 ## OpenShift Deploy
 
 - Create a namespace
