@@ -11,10 +11,10 @@ spec:
         elements:
         - environment: "dev"
           branch: cicd
-        # - environment: "stage"
-        #   branch: cicd
-        # - environment: "prod"
-        #   branch: cicd
+        - environment: "qa"
+          branch: cicd
+        - environment: "prod"
+          branch: cicd
   template:
     metadata:
       name: 'eap-sample-{{ environment }}'
