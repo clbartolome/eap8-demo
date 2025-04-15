@@ -5,6 +5,10 @@ Forked from: https://github.com/RedHat-Middleware-Workshops/eap8-rhd-learning-pa
 > [!NOTE]  
 > Branch **'cicd'** contains instructions to setup a CICD process to build and deploy this application in multiple environments using Tekton and ArgoCD.
 
+> [!TIP]  
+> Review [this article](https://developers.redhat.com/learning/learn:java:develop-modern-java-applications-jboss-eap-8/resource/resources:deploy-modern-jboss-eap-8-application-openshift) to undestand how JBoss EAP could be deploy as an image in OCP (followed in this repo examples).
+
+
 ## OpenShift Deploy
 
 - Create a namespace
