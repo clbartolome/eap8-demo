@@ -16,4 +16,4 @@ secretGenerator:
 images:
   - name: app-image
     newName: image-registry.openshift-image-registry.svc:5000/eap-sample-cicd/eap-sample
-    newTag: 6.0.1-1744805431-dev
+    newTag: 6.0.1-1744798582-dev
